@@ -1,152 +1,90 @@
-# Machine-Learning-Project
-This project predicts flight delays (>15 minutes) by combining BTS flight data with weather data, using machine learning models to identify key factors influencing delays. A Random Forest model achieved strong performance (F1 ≈ 0.76, ROC-AUC ≈ 0.85), showing that time, route, and weather conditions are significant predictors.
+# Flight Delay Prediction
 
+Predicting whether a U.S. flight will be delayed more than 15 minutes by combining BTS
+flight data with real weather data, and figuring out which scheduling and weather factors
+actually drive the delays. A Random Forest reached F1 ≈ 0.76 and ROC-AUC ≈ 0.85, with time
+of day, route, and weather all coming through as meaningful predictors.
 
-# Flight Delay Prediction using Machine Learning
+## Data
 
-## Overview
-This project predicts flight delays (>15 minutes) by combining U.S. Bureau of Transportation Statistics (BTS) flight data with real-world weather data.  
-The goal is to understand how scheduling and environmental factors contribute to delays and build a reliable predictive model.
+- **Flights:** BTS On-Time Performance data, 2019 Q1.
+- **Weather:** Iowa State Environmental Mesonet, around the top 20 airports.
+- **Merge:** joined on airport location and timestamp, converted to UTC.
+- The raw datasets aren't in the repo (too large).
 
----
+## Approach
 
-## Dataset
+Cleaning and feature work:
 
-- **Flight Data:** BTS On-Time Performance Data (2019 Q1)  
-- **Weather Data:** Iowa State Environmental Mesonet (around top 20 airports)
-- Datasets not included in this github (too large to do so)
-- **Integration:** Data merged using airport location and timestamp (converted to UTC)
+- Dropped leakage features like `DEP_DELAY`.
+- Aggregated weather into 30-minute windows and merged on airport + time.
+- Built temporal features (departure hour, weekend flag, peak-hour flag) and weather
+  features (temperature, wind speed, precipitation, pressure), plus route and categorical
+  encodings.
+- Used random oversampling to balance delayed vs non-delayed flights.
 
----
+Models tried: Logistic Regression, Decision Tree, Random Forest, Extra Trees, Gradient
+Boosting, AdaBoost, and Linear SVM.
 
-## Methodology
+## Results
 
-### Data Processing
-- Cleaned and filtered flight records  
-- Removed data leakage features (e.g., `DEP_DELAY`)  
-- Aggregated weather data into 30-minute intervals  
-- Merged datasets on airport and time  
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|---|---|---|---|---|---|
+| **Random Forest** | 0.764 | 0.797 | 0.707 | **0.749** | **0.852** |
+| Decision Tree | 0.738 | 0.746 | 0.721 | 0.733 | 0.821 |
+| Extra Trees | 0.731 | 0.770 | 0.660 | 0.711 | 0.817 |
+| Gradient Boosting | 0.653 | 0.660 | 0.631 | 0.645 | 0.712 |
+| Logistic Regression | 0.632 | 0.638 | 0.611 | 0.624 | 0.682 |
+| Linear SVM | 0.632 | 0.639 | 0.609 | 0.624 | N/A |
+| AdaBoost | 0.622 | 0.629 | 0.592 | 0.610 | 0.674 |
 
-### Feature Engineering
-- Temporal features: departure hour, weekend flag, peak hour  
-- Weather features: temperature, wind speed, precipitation, pressure  
-- Route-based and categorical encoding  
+Random Forest gave the best precision/recall balance, so I used it as the final model
+(F1 ≈ 0.76, ROC-AUC ≈ 0.85).
 
-### Handling Class Imbalance
-- Applied **Random OverSampling** to balance delayed vs non-delayed flights  
+## What the data showed
 
----
+**Time of day**
 
-## Models Evaluated
-
-- Logistic Regression  
-- Decision Tree  
-- Random Forest  
-- Gradient Boosting  
-- AdaBoost  
-- Linear SVM  
-
----
-## Model Comparison
-
-| Model                | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
-|---------------------|----------|-----------|--------|----------|---------|
-| **Random Forest**   | 0.7636   | 0.7973    | 0.7069 | **0.7494** | **0.8515** |
-| Decision Tree       | 0.7377   | 0.7459    | 0.7209 | 0.7332   | 0.8214  |
-| Extra Trees         | 0.7313   | 0.7695    | 0.6604 | 0.7108   | 0.8170  |
-| Gradient Boosting   | 0.6528   | 0.6597    | 0.6310 | 0.6450   | 0.7116  |
-| Logistic Regression | 0.6322   | 0.6379    | 0.6114 | 0.6244   | 0.6822  |
-| Linear SVM          | 0.6323   | 0.6388    | 0.6089 | 0.6235   | N/A     |
-| AdaBoost            | 0.6216   | 0.6292    | 0.5921 | 0.6101   | 0.6739  |
-
-## Final Model Performance for the Best Model = Random Forest
-
-| Metric        | Value |
-|--------------|------|
-| **F1 Score** | 0.76 |
-| **ROC-AUC**  | 0.85 |
-| **Model**    | Random Forest |
-
-The Random Forest model provided the best balance between precision and recall, effectively capturing delay patterns.
-
----
-
-## Key Insights
-
-### Delay Patterns Throughout the Day
 ![Delay vs Time](delay_vs_time.png)
 
-- Delay probability increases during peak travel hours  
-- Congestion plays a major role in delays  
+Delay probability climbs during peak travel hours, so congestion is a big part of it.
 
----
+**Weather**
 
-### Weather Impact on Delays
-
-#### Wind Speed
 ![Wind vs Delay](wind_vs_delay.png)
-
-#### Temperature
 ![Temperature vs Delay](temp_vs_delay.png)
-
-
-#### Dew Point
 ![Dewpoint vs Delay](dewpoint_vs_delay.png)
-
-#### Wind Gusts
 ![Gust vs Delay](gust_vs_delay.png)
 
-- Strong correlation between adverse weather conditions and delays  
-- Wind and precipitation-related features significantly influence outcomes  
+Adverse weather lines up with delays, with wind and precipitation features mattering most.
 
----
+**Airport-specific rain**
 
-### Airport-Specific Rain Impact
 ![Airport Rain Heatmap](airport_rain_heatmap.png)
 
-- Certain airports are more sensitive to weather disruptions  
-- Rain amplifies delay probability across major hubs  
+Some airports are far more sensitive to rain than others; it amplifies delay probability at
+the major hubs.
 
----
+## Takeaways
 
----
+- Time of day and weather are the strongest drivers.
+- Tree-based models beat the linear ones, which fits since the relationships are nonlinear.
+- Handling the class imbalance was necessary to get realistic performance.
 
-## How to Run
+## Running it
 
-1. Install dependencies:
-
+```bash
 pip install -r requirements.txt
-
-2. Launch Notebook 
-
 jupyter notebook Project.ipynb
+```
+
+Raw data isn't included (size), so the data paths may need adjusting for a local run.
+
+## Next
+
+- Add real-time flight tracking and air-traffic congestion metrics.
+- Try sequence models.
 
 ---
 
-## Notes
-
-- Raw datasets are not included due to size constraints  
-- Data paths may need adjustment depending on local setup  
-
----
-
-## Key Takeaways
-
-- Flight delays are strongly influenced by **time-of-day and weather conditions**  
-- Tree-based models outperform linear models due to nonlinear relationships  
-- Handling class imbalance is critical for realistic performance  
-
----
-
-## Future Work
-
-- Incorporate real-time flight tracking data  
-- Include air traffic congestion metrics  
-- Explore deep learning or sequence-based models  
-
----
-
-## Author
-Jayant Rathi  
-MS Robotics – Northeastern University
-- Project done for EECE 5644 - Spring 2026
+Jayant Rathi, MS Robotics, Northeastern University. Done for EECE 5644, Spring 2026.
