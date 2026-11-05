@@ -21,7 +21,7 @@ Cleaning and feature work:
 - Built temporal features (departure hour, weekend flag, peak-hour flag) and weather
   features (temperature, wind speed, precipitation, pressure), plus route and categorical
   encodings.
-- Used random oversampling to balance delayed vs non-delayed flights.
+- Used random oversampling to balance the delayed vs non-delayed flights.
 
 Models tried: Logistic Regression, Decision Tree, Random Forest, Extra Trees, Gradient
 Boosting, AdaBoost, and Linear SVM.
